@@ -7,7 +7,7 @@ This naive lock-free stack is written in **arm** assembly to provide api that ca
 ### What is the output log
 
 * 'begin' specifies the beginning of a Load-Link operation. There is likely more than one 'begin' in one push/pop operation as Store-Conditional fails, which causes a retry.
-* If a 'suc' is followed after 'begin', the Store-Conditional op succeeds. And according to LL/SC's sematric, non push/pop op should succeed, which equals to a LL/SC success, during this period.
+* If a 'suc' is followed after 'begin', the Store-Conditional op succeeds. And according to LL/SC's sematics, non push/pop op should succeed, which equals to a LL/SC success, during this period.
 * Thus, if there is another 'suc' in one LL/SC peroid(from last 'begin' to 'suc'), there comes an ABA problem.
 
 

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 					
-extern int myadd(int a, int b);
 extern void* pop(int id);
 extern void push(int id, struct node* obj_ptr);
 
@@ -47,7 +46,8 @@ int main()
 	return (0);
 }
 
-void stack_init(int n) {
+void stack_init(int n) 
+{
 	node *t;
 	for (int i = 0; i < n; ++i) {
 		t = malloc(sizeof(node));
