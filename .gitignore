@@ -1,0 +1,11 @@
+.*
+.*.swp
+dis
+gens.S
+gens.c
+gens.s
+lockfreestack.s
+log
+main
+myadd.s
+
