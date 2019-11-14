@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <assert.h>
 					
-extern void* pop(int id);
-extern void push(int id, struct node* obj_ptr);
+extern void* pop();
+extern void push(struct node* obj_ptr);
 
 struct node{
 	int data;
@@ -19,18 +22,25 @@ void stack_init(int);
 void *worker(void *arg)
 {
 	int id = *(int*)arg;
+	long tid = syscall(__NR_gettid);
+	printf("thread starts, tid = %ld\n", tid);
+	//return NULL;
 	while (1) {
-		push(id, pop(id));
+		push(pop());
 	}
 	return NULL;
 }
 
 int main()
 {
-	stack_init(100);
+	stack_init(16);
 	printf("program starts, stack top = %p\n", p_top);
-	//printf("pop val = %p\n", pop(1));
-	push(1, pop(1));
+	printf("pop val = %p\n", pop());
+	push(pop());
+	//while (1) {
+	//	push(pop());
+	//}
+	printf("program starts, phase 2\n");
 	int arg[1024];
 	int nthread = 16;
 	for (int i = 0; i < nthread; ++i) {

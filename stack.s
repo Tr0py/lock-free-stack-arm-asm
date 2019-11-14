@@ -11,6 +11,7 @@ pop:
 	push	{r0, lr}
 
 try:
+/*
 @printf start info
 	ldr		r0, =sStart
 	@pop		{r1}
@@ -20,6 +21,7 @@ try:
 	ldr 	r2, [r2]		@r2 = p_top
 	ldr		r3, [r2, #4]	@next
 	blx		printf
+	*/
 
 
 	ldr		r1, =p_top
@@ -30,12 +32,14 @@ try:
 	bne		try
 
 suc:
+/*
 	pop		{r1}
 	push	{r2}			@save old_p_top
 	ldr		r0, =sSuc
 	ldr		r2, =p_top
 	ldr		r2, [r2]
 	blx		printf
+*/
 
 
 	pop		{r0, pc}		@ret = old_p_top
@@ -54,6 +58,7 @@ push:
 	push	{r0, r1, lr}
 
 tryPush:
+/*
 @print start info
 	ldr		r0, =sPushStart
 	pop		{r1, r3}
@@ -62,6 +67,7 @@ tryPush:
 	ldr 	r2, [r2]		@r2 = p_top
 	blx		printf
 
+*/
 
 
 	ldr		r1, =p_top
@@ -70,13 +76,16 @@ tryPush:
 	str		r2, [r3, #4]	@obj_ptr->next = p_top
 	strex	r0, r3, [r1]	@store next -> [p_top]
 	cmp		r0, #0
-	bne		try
+	bne		tryPush
 
+/*
+@print end info
 	pop		{r1, r3}		@r1 = id
 	ldr		r0, =sPushSuc
 	ldr		r2, =p_top
 	ldr		r2, [r2]
 	blx		printf
+*/
 
 
 	pop		{pc}		@ret = old_p_top
@@ -92,6 +101,6 @@ sSuc:
 sPushStart:
 	.asciz		"thread %d push begins, top = %p, obj = %p\n"
 sPushSuc:
-	.asciz		"thread %d push suc, top = %p\n"
+	.asciz		"thread %d push suc, top = %p, next = %p\n"
 
 

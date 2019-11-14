@@ -5,7 +5,8 @@ gens.S
 gens.c
 gens.s
 lockfreestack.s
-log
+*log*
 main
 myadd.s
+*.txt
 
