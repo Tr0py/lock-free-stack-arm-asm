@@ -25,10 +25,31 @@ void *worker(void *arg)
 	long tid = syscall(__NR_gettid);
 	printf("thread starts, tid = %ld\n", tid);
 	//return NULL;
+	//int i = 100000000000;
 	while (1) {
 		push(pop());
+		if (p_top == p_top->next) {
+			printf("[test]\tp == p->next. Stack is smashed.\n");
+			exit(1);
+		}
 	}
 	return NULL;
+}
+
+void print_stack()
+{
+	printf("===============Printing stack...=============\n");
+	struct node *p, p1, p2;
+	p = p_top;
+	while (p) {
+		printf("node %p data %d next %p\n", p, p->data, p->next);
+		if (p == p->next) {
+			printf("p == p->next. Stack is smashed.\n");
+			exit(1);
+		}
+
+		p = p->next;
+	}
 }
 
 int main()
@@ -40,7 +61,8 @@ int main()
 	//while (1) {
 	//	push(pop());
 	//}
-	printf("program starts, phase 2\n");
+	print_stack();
+	printf("===============Creating threads=============\n");
 	int arg[1024];
 	int nthread = 16;
 	for (int i = 0; i < nthread; ++i) {
@@ -51,7 +73,8 @@ int main()
 		pthread_join(hThread[i], NULL);
 	}
 
-	printf("program starts, stack top = %p\n", p_top);
+	print_stack();
+	printf("program ends, stack top = %p\n", p_top);
 
 	return (0);
 }
