@@ -24,9 +24,8 @@ void *worker(void *arg)
 	int id = *(int*)arg;
 	long tid = syscall(__NR_gettid);
 	printf("thread starts, tid = %ld\n", tid);
-	//return NULL;
-	//int i = 100000000000;
-	while (1) {
+	int i = 0xFFF;
+	while (--i) {
 		push(pop());
 		if (p_top == p_top->next) {
 			printf("[test]\tp == p->next. Stack is smashed.\n");
@@ -54,17 +53,13 @@ void print_stack()
 
 int main()
 {
-	stack_init(16);
-	printf("program starts, stack top = %p\n", p_top);
-	printf("pop val = %p\n", pop());
-	push(pop());
-	//while (1) {
-	//	push(pop());
-	//}
-	print_stack();
-	printf("===============Creating threads=============\n");
 	int arg[1024];
 	int nthread = 16;
+	stack_init(nthread + 10);
+	printf("program starts, stack top = %p\n", p_top);
+	printf("pop val = %p\n", pop());
+	print_stack();
+	printf("===============Creating threads=============\n");
 	for (int i = 0; i < nthread; ++i) {
 		arg[i] = i;
 		pthread_create(&hThread[i], NULL, worker, &arg[i]);
@@ -75,6 +70,7 @@ int main()
 
 	print_stack();
 	printf("program ends, stack top = %p\n", p_top);
+	printf("ABA problem test passed!");
 
 	return (0);
 }

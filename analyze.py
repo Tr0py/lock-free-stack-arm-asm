@@ -86,6 +86,7 @@ def search_tids(logFN):
 
 if __name__=='__main__':
     logFN = 'log'
+    logFN = input()
     lastLL={}
     falseABA = 0
     trueABA = 0
