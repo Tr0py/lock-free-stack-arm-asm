@@ -24,14 +24,20 @@ void *worker(void *arg)
 	int id = *(int*)arg;
 	long tid = syscall(__NR_gettid);
 	printf("thread starts, tid = %ld\n", tid);
-	int i = 0xFFF;
+	int i = 0xFFFF;
 	while (--i) {
 		push(pop());
+		/* FIXME: this is not atomic since reading p_top and p_top->next 
+		 * is not atomic. So how to detect aba?
+		 */
+		/*
 		if (p_top == p_top->next) {
-			printf("[test]\tp == p->next. Stack is smashed.\n");
-			exit(1);
-		}
+                       printf("[test]\tp == p->next. Stack is smashed.\n");
+                       exit(1);
+               }
+	       */
 	}
+	printf("thread ends, tid = %ld\n", tid);
 	return NULL;
 }
 
@@ -70,7 +76,7 @@ int main()
 
 	print_stack();
 	printf("program ends, stack top = %p\n", p_top);
-	printf("ABA problem test passed!");
+	printf("ABA problem test passed!\n");
 
 	return (0);
 }
