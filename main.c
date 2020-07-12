@@ -24,7 +24,7 @@ void *worker(void *arg)
 	int id = *(int*)arg;
 	long tid = syscall(__NR_gettid);
 	printf("thread starts, tid = %ld\n", tid);
-	int i = 0xFFFF;
+	int i = 0xFFF;
 	while (--i) {
 		push(pop());
 		/* FIXME: this is not atomic since reading p_top and p_top->next 
