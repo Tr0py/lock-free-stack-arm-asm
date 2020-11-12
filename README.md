@@ -1,6 +1,6 @@
 # Lock-free stack 
 
-QEMU translates <a href = https://en.wikipedia.org/wiki/Load-link/store-conditional>Load-Link/Store-Conditional(LL/SC)</a> to test-test-and-set, resulting in potential <a href = https://en.wikipedia.org/wiki/ABA_problem>ABA problem</a>.  
+QEMU translates <a href = https://en.wikipedia.org/wiki/Load-link/store-conditional>Load-Link/Store-Conditional(LL/SC)</a> to test-test-and-set using CAS, resulting in potential <a href = https://en.wikipedia.org/wiki/ABA_problem>ABA problem</a>.  
 This naive lock-free stack is written in **arm** assembly to provide api that can be used in C/C++.
 
 **This program is deliberatly designed to crash at ABA problems.**
@@ -17,6 +17,11 @@ Ideally, the stack elements wouldn't change after these concurrent pops and push
 You can check it by using an Arm native machine to run this.
 However, if you run it with QEMU, who doesn't emulate LL/SC correctly, and let many threads running at the same time
 (which means you have to increase your loop number to make sure they are running concurrently), the stack would be smashed.
+
+![ABA-flow](./images/abaflow.png)
+
+This is hard to understand at first.
+If you're interested in details, please read our paper *Enhancing Atomic Instruction Emulation for Cross-ISA Dynamic Binary Translation* in CGO 2021.
 
 
 ### Build
