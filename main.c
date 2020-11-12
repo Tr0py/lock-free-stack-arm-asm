@@ -16,7 +16,9 @@ struct node{
 typedef struct node node;
 
 node *p_top;
-pthread_t hThread[1024];
+pthread_t hThread[4096];
+static int threadNum = 0, loopNum = 0;
+static char* elfname;
 
 void stack_init(int);
 void *worker(void *arg)
@@ -24,7 +26,7 @@ void *worker(void *arg)
 	int id = *(int*)arg;
 	long tid = syscall(__NR_gettid);
 	printf("thread starts, tid = %ld\n", tid);
-	int i = 0xFFF;
+	int i = loopNum;
 	while (--i) {
 		push(pop());
 		/* FIXME: this is not atomic since reading p_top and p_top->next 
@@ -48,6 +50,7 @@ void print_stack()
 	p = p_top;
 	while (p) {
 		printf("node %p data %d next %p\n", p, p->data, p->next);
+        /* Check stack. */
 		if (p == p->next) {
 			printf("p == p->next. Stack is smashed.\n");
 			exit(1);
@@ -57,23 +60,54 @@ void print_stack()
 	}
 }
 
-int main()
+int printUsage()
+{
+    printf("Usage: %s -t <threads number> -l <loop number>.\n"
+            "Example: %s -t 16 -l 1000000.\n", elfname, elfname);
+    exit(-1);
+}
+
+
+int main(int argc, char* argv[])
 {
 	int arg[1024];
-	int nthread = 16;
-	stack_init(nthread + 10);
+    int opt;
+    
+    /* Parse args */
+    elfname = argv[0];
+    while ((opt = getopt(argc, argv, "t:l:")) != -1) {
+        switch(opt) {
+            case 't':
+                threadNum = atoi(optarg);
+                break;
+            case 'l':
+                loopNum = atoi(optarg);
+                break;
+            default:
+                printUsage();
+        }
+    }
+    /* Check args */
+    if (!threadNum || !loopNum) {
+        printUsage();
+    }
+    printf("Running with %d threads for %d times.", threadNum, loopNum);
+
+    /* Init stack. */
+	stack_init(threadNum + 10);
 	printf("program starts, stack top = %p\n", p_top);
 	printf("pop val = %p\n", pop());
 	print_stack();
 	printf("===============Creating threads=============\n");
-	for (int i = 0; i < nthread; ++i) {
+	for (int i = 0; i < threadNum; ++i) {
 		arg[i] = i;
 		pthread_create(&hThread[i], NULL, worker, &arg[i]);
 	}
-	for (int i = 0; i < nthread; ++i) {
+	for (int i = 0; i < threadNum; ++i) {
 		pthread_join(hThread[i], NULL);
 	}
 
+    /* Check stack. */
 	print_stack();
 	printf("program ends, stack top = %p\n", p_top);
 	printf("ABA problem test passed!\n");

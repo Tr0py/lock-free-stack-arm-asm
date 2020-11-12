@@ -1,14 +1,22 @@
-# Lock-free stack
+# Lock-free stack 
 
-QEMU translates <a href = https://en.wikipedia.org/wiki/Load-link/store-conditional>Load-Link/Store-Conditional(LL/SC)</a> to test-test-and-set, resulting in potential <a href = https://en.wikipedia.org/wiki/ABA_problem>ABA problem</a>.
-
+QEMU translates <a href = https://en.wikipedia.org/wiki/Load-link/store-conditional>Load-Link/Store-Conditional(LL/SC)</a> to test-test-and-set, resulting in potential <a href = https://en.wikipedia.org/wiki/ABA_problem>ABA problem</a>.  
 This naive lock-free stack is written in **arm** assembly to provide api that can be used in C/C++.
 
-### What is the output log
+**This program is deliberatly designed to crash at ABA problems.**
 
-* 'begin' specifies the beginning of a Load-Link operation. There is likely more than one 'begin' in one push/pop operation as Store-Conditional fails, which causes a retry.
-* If a 'suc' is followed after 'begin', the Store-Conditional op succeeds. And according to LL/SC's sematics, non push/pop op should succeed, which equals to a LL/SC success, during this period.
-* Thus, if there is another 'suc' in one LL/SC peroid(from last 'begin' to 'suc'), there comes an ABA problem.
+
+### What does the program do
+
+This test first initialize an Arm lockfree stack. 
+Then it creates threads to repeatedly do pop and push to the top of the stack, using ABA-safe LL/SC.
+At last, the program check if the stack is not smashed: there are still the same elements in a different order.
+If so, the ABA test succeeds, else there are ABA problems.
+
+Ideally, the stack elements wouldn't change after these concurrent pops and pushes.
+You can check it by using an Arm native machine to run this.
+However, if you run it with QEMU, who doesn't emulate LL/SC correctly, and let many threads running at the same time
+(which means you have to increase your loop number to make sure they are running concurrently), the stack would be smashed.
 
 
 ### Build
@@ -19,16 +27,117 @@ make
 ### Run
 
 ```
-qemu-arm ./main 
-or
-qemu-arm ./main > log
-or 
-./main
+Usage: ./lockfree-stack -t <threads number> -l <loop number>.
 ```
 
-### TODO
+#### Example run using QEMU: 
+```
+$ qemu-arm ./lockfree-stack -t 8 -l 1000000
+Running with 8 threads for 1000000 times.program starts, stack top = 0x82518
+pop val = 0x82518
+===============Printing stack...=============
+node 0x82508 data 18 next 0x824f8
+node 0x824f8 data 17 next 0x824e8
+node 0x824e8 data 16 next 0x824d8
+node 0x824d8 data 15 next 0x824c8
+node 0x824c8 data 14 next 0x824b8
+node 0x824b8 data 13 next 0x824a8
+node 0x824a8 data 12 next 0x82498
+node 0x82498 data 11 next 0x82488
+node 0x82488 data 10 next 0x82478
+node 0x82478 data 9 next 0x82468
+node 0x82468 data 8 next 0x82458
+node 0x82458 data 7 next 0x82448
+node 0x82448 data 6 next 0x82438
+node 0x82438 data 5 next 0x82428
+node 0x82428 data 4 next 0x82418
+node 0x82418 data 3 next 0x82408
+node 0x82408 data 2 next (nil)
+===============Creating threads=============
+thread starts, tid = 27015
+thread starts, tid = 27016
+thread starts, tid = 27017
+thread starts, tid = 27018
+thread starts, tid = 27020
+thread starts, tid = 27019
+thread starts, tid = 27021
+thread starts, tid = 27022
+thread ends, tid = 27015
+thread ends, tid = 27016
+thread ends, tid = 27017
+thread ends, tid = 27020
+thread ends, tid = 27019
+thread ends, tid = 27022
+thread ends, tid = 27018
+thread ends, tid = 27021
+===============Printing stack...=============
+node 0x824b8 data 13 next 0x824b8
+p == p->next. Stack is smashed.
+```
 
-A script to analyze log and calculate ABA problem occurance rate.
+#### Example run in native Arm:
+```
+$ ./lockfree-stack -t 8 -l 2000000  
+Running with 8 threads for 2000000 times.program starts, stack top = 0x82518
+pop val = 0x82518
+===============Printing stack...=============
+node 0x82508 data 18 next 0x824f8
+node 0x824f8 data 17 next 0x824e8
+node 0x824e8 data 16 next 0x824d8
+node 0x824d8 data 15 next 0x824c8
+node 0x824c8 data 14 next 0x824b8
+node 0x824b8 data 13 next 0x824a8
+node 0x824a8 data 12 next 0x82498
+node 0x82498 data 11 next 0x82488
+node 0x82488 data 10 next 0x82478
+node 0x82478 data 9 next 0x82468
+node 0x82468 data 8 next 0x82458
+node 0x82458 data 7 next 0x82448
+node 0x82448 data 6 next 0x82438
+node 0x82438 data 5 next 0x82428
+node 0x82428 data 4 next 0x82418
+node 0x82418 data 3 next 0x82408
+node 0x82408 data 2 next (nil)
+===============Creating threads=============
+thread starts, tid = 27432
+thread starts, tid = 27433
+thread starts, tid = 27434
+thread starts, tid = 27435
+thread starts, tid = 27436
+thread starts, tid = 27437
+thread starts, tid = 27438
+thread starts, tid = 27439
+thread ends, tid = 27434
+thread ends, tid = 27433
+thread ends, tid = 27432
+thread ends, tid = 27435
+thread ends, tid = 27436
+thread ends, tid = 27437
+thread ends, tid = 27438
+thread ends, tid = 27439
+===============Printing stack...=============
+node 0x824f8 data 17 next 0x82508
+node 0x82508 data 18 next 0x824e8
+node 0x824e8 data 16 next 0x824d8
+node 0x824d8 data 15 next 0x824c8
+node 0x824c8 data 14 next 0x824b8
+node 0x824b8 data 13 next 0x824a8
+node 0x824a8 data 12 next 0x82498
+node 0x82498 data 11 next 0x82488
+node 0x82488 data 10 next 0x82478
+node 0x82478 data 9 next 0x82468
+node 0x82468 data 8 next 0x82458
+node 0x82458 data 7 next 0x82448
+node 0x82448 data 6 next 0x82438
+node 0x82438 data 5 next 0x82428
+node 0x82428 data 4 next 0x82418
+node 0x82418 data 3 next 0x82408
+node 0x82408 data 2 next (nil)
+program ends, stack top = 0x824f8
+ABA problem test passed!
+
+```
+
 
 ### Related
 
